@@ -24,6 +24,7 @@ class TestChromeDriver(TransactionTestCase):
             options.add_argument("--disable-setuid-sandbox")
             options.add_argument("--disable-dev-shm-usage")
             options.add_argument("--disable-blink-features=AutomationControlled")
+
             # Initialize Chrome driver
             driver = webdriver.Chrome(options=options)
 

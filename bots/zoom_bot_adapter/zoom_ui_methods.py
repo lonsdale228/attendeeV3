@@ -24,9 +24,14 @@ class ZoomUIMethods:
             EC.presence_of_element_located((By.ID, selector))
         )
 
-    def join_meeting(self):
+    def join_meeting(self, url):
         try:
-            pwd = "TjBtV2ZqSEt1Rmc3QVVOb1FxQ0NMQT09"
+            from urllib import parse
+            parsed_url = parse.urlparse(url)
+
+            query_params = parse.parse_qs(parsed_url.query)
+            pwd = query_params.get("pwd", [None])[0]
+
             name_field = self.locate_by_id('input-for-name')
             time.sleep(1)
             name_field.send_keys("Jopa")

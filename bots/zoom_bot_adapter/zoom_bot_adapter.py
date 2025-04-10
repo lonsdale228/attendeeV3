@@ -81,10 +81,16 @@ class ZoomBotAdapter(WebBotAdapter, ZoomUIMethods):
             "pactl", "load-module", "module-null-sink", "sink_name=virt"
         ])
 
+        from urllib import parse
+
+        parsed_url = parse.urlparse(self.meeting_url)
+        conf_id = parsed_url.path.split("/j/")[-1]
+
+        url = f"https://zoom.us/wc/join/{conf_id}"
         self.driver.execute_cdp_cmd(
             "Browser.grantPermissions",
             {
-                "origin": self.meeting_url,
+                "origin": url,
                 "permissions": [
                     "geolocation",
                     "audioCapture",
@@ -93,8 +99,8 @@ class ZoomBotAdapter(WebBotAdapter, ZoomUIMethods):
                 ],
             },
         )
-        self.driver.get(self.meeting_url)
-        self.join_meeting()
+        self.driver.get(url)
+        self.join_meeting(self.meeting_url)
 
         time.sleep(3)
 
