@@ -1,13 +1,23 @@
+import logging
 import re
 import subprocess
+import threading
+import time
 from urllib.parse import urlparse, parse_qs
 
 import cv2
 import numpy as np
+from selenium import webdriver
+from selenium.common import NoSuchElementException
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import WebDriverWait
 
 from bots.web_bot_adapter import WebBotAdapter
 from bots.zoom_bot_adapter.zoom_ui_methods import ZoomUIMethods
 
+
+logger = logging.getLogger(__name__)
 
 def create_black_yuv420_frame(width=640, height=360):
     # Create BGR frame (red is [0,0,0] in BGR)
@@ -86,15 +96,51 @@ class ZoomBotAdapter(WebBotAdapter, ZoomUIMethods):
         self.driver.get(self.meeting_url)
         self.join_meeting()
 
+        time.sleep(3)
+
+        self.start_modal_monitoring()
+        #
+        # time.sleep(15)
+        #
+        # self.click_leave_button()
+
 
     # def handle_websocket(self, websocket):
     #     # Similar WebSocket handling as Google Meet but for Zoom's data format
     #     while True:
     #         message = websocket.receive()
     #         # Process Zoom-specific messages
+    def monitor_for_meeting_end_modal(self, check_interval=1):
+        """
+        Check periodically if the meeting ended modal is present.
+        Adjust the selector to match the element unique to the modal.
+        """
+        while not self.left_meeting:
+            try:
+
+                modal_element = WebDriverWait(self.driver, 3).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, 'div[aria-label="Meeting is end now"]'))
+                )
+                if modal_element:
+                    logger.info("Detected meeting end modal, triggering click_leave_button()")
+                    self.click_leave_button()
+                    break
+            except NoSuchElementException:
+                # The modal is not yet present; wait and try again.
+                pass
+            except Exception as ex:
+                logger.error(f"Error in modal monitor thread: {ex}")
+            time.sleep(check_interval)
+
+    def start_modal_monitoring(self):
+        """Starts the meeting end modal monitoring in a separate thread."""
+        monitor_thread = threading.Thread(target=self.monitor_for_meeting_end_modal, daemon=True)
+        monitor_thread.start()
 
     def click_leave_button(self):
-        self.locate_zoom_element('button[aria-label="Leave"]').click()
+        # self.locate_zoom_element('button[aria-label="Leave"]').click()
+
+        self.send_message_callback({"message": self.Messages.MEETING_ENDED})
 
     def get_first_buffer_timestamp_ms(self):
         if self.media_sending_enable_timestamp_ms is None:
