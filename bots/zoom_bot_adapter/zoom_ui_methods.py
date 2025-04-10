@@ -42,7 +42,7 @@ class ZoomUIMethods:
             time.sleep(1)
 
             self.driver.get_screenshot_as_file(f"LambdaTestVisibleScreen_{uuid1()}.png")
-            self.handle_meeting_controls()
+            # self.handle_meeting_controls()
 
         except Exception as e:
             logging.error(f"Join meeting failed: {str(e)}")

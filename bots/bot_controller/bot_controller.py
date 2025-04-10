@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import signal
+import time
 import traceback
 
 import gi
@@ -91,10 +92,12 @@ class BotController:
         from bots.zoom_bot_adapter import ZoomBotAdapter
 
         return ZoomBotAdapter(
-            # Only pass supported parameters
             display_name=self.bot_in_db.name,
             send_message_callback=self.on_message_from_adapter,
             meeting_url=self.bot_in_db.meeting_url,
+            recording_view=self.bot_in_db.recording_view(),
+            start_recording_screen_callback=self.screen_and_audio_recorder.start_recording,
+            stop_recording_screen_callback=self.screen_and_audio_recorder.stop_recording,
             automatic_leave_configuration=self.automatic_leave_configuration
         )
 
@@ -169,6 +172,7 @@ class BotController:
         else:
             raise Exception("No rtmp client found")
 
+    # cleanup and send
     def cleanup(self):
         if self.cleanup_called:
             logger.info("Cleanup already called, exiting")
@@ -271,7 +275,7 @@ class BotController:
         # so we don't need to create a gstreamer pipeline here
         meeting_type = self.get_meeting_type()
         if meeting_type == MeetingTypes.ZOOM:
-            return True
+            return False
         elif meeting_type == MeetingTypes.GOOGLE_MEET:
             return False
         elif meeting_type == MeetingTypes.TEAMS:
@@ -373,6 +377,8 @@ class BotController:
             # Clean up Redis subscription
             pubsub.unsubscribe(channel)
             pubsub.close()
+
+
 
     def take_action_based_on_bot_in_db(self):
         if self.bot_in_db.state == BotStates.JOINING:

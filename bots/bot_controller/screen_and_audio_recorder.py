@@ -1,6 +1,7 @@
 import logging
 import os
 import subprocess
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -9,21 +10,59 @@ class ScreenAndAudioRecorder:
     def __init__(self, file_location):
         self.file_location = file_location
         self.ffmpeg_proc = None
-        self.screen_dimensions = (1930, 1090)
+        self.screen_dimensions = (1920, 1080)
 
     def start_recording(self, display_var):
-        logger.info(f"Starting screen recorder for display {display_var} with dimensions {self.screen_dimensions} and file location {self.file_location}")
-        ffmpeg_cmd = ["ffmpeg", "-y", "-thread_queue_size", "4096", "-framerate", "30", "-video_size", f"{self.screen_dimensions[0]}x{self.screen_dimensions[1]}", "-f", "x11grab", "-draw_mouse", "0", "-probesize", "32", "-i", display_var, "-thread_queue_size", "4096", "-f", "pulse", "-i", "default", "-vf", "crop=1920:1080:10:10", "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p", "-g", "30", "-c:a", "aac", "-strict", "experimental", "-b:a", "128k", self.file_location]
+        logger.info(
+            f"Starting screen recorder for display {display_var} with dimensions {self.screen_dimensions} and file location {self.file_location}")
+        # ffmpeg_cmd = ["ffmpeg", "-y", "-thread_queue_size", "4096", "-framerate", "30", "-video_size", f"{self.screen_dimensions[0]}x{self.screen_dimensions[1]}", "-f", "x11grab", "-draw_mouse", "0", "-probesize", "32", "-i", display_var, "-thread_queue_size", "4096", "-f", "pulse", "-i", "default", "-vf", "crop=1920:1080:10:10", "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p", "-g", "30", "-c:a", "aac", "-strict", "experimental", "-b:a", "128k", self.file_location]
+        # ffmpeg_cmd = ["ffmpeg", "-y", "-thread_queue_size", "4096", "-framerate", "30", "-video_size", f"1280x720", "-f", "x11grab", "-draw_mouse", "0", "-probesize", "32", "-i", ":0.0", "-thread_queue_size", "4096", "-f", "pulse", "-i", "default", "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p", "-g", "30", "-c:a", "aac", "-strict", "experimental", "-b:a", "128k", self.file_location]
+        # ffmpeg_cmd = ["ffmpeg", "-y", "-thread_queue_size", "4096", "-framerate", "30", "-video_size",
+        #               f"1920x1080", "-f", "x11grab", "-draw_mouse", "0",
+        #               "-probesize", "32", "-i", ":0", "-thread_queue_size", "4096", "-f", "pulse", "-vf", "crop=1920:1080:10:10", "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt",
+        #               "yuv420p", "-g", "30", "-c:a", "aac", "-strict", "experimental", "-b:a", "128k",
+        #               self.file_location]
+        # "-f", "pulse",
+
+        # subprocess.run([
+        #     "pulseaudio", "-D", "--exit-idle-time=-1", "--system"
+        # ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        ffmpeg_cmd = [
+            "ffmpeg", "-y",
+            "-thread_queue_size", "4096",
+            "-framerate", "30",
+            "-video_size", f"{self.screen_dimensions[0]}x{self.screen_dimensions[1]}",
+            "-f", "x11grab",
+            "-draw_mouse", "0",
+            "-probesize", "32",
+            "-i", display_var,
+            "-ac", "2",
+            "-ar", "44100",
+            "-f", "pulse",
+            "-i", "default",
+            "-vf", "crop=1920:1080:10:10",
+            "-c:v", "libx264",
+            "-preset", "ultrafast",
+            "-pix_fmt", "yuv420p",
+            "-g", "30",
+            "-c:a", "aac",
+            "-strict", "experimental",
+            "-b:a", "128k",
+            self.file_location
+        ]
 
         logger.info(f"Starting FFmpeg command: {' '.join(ffmpeg_cmd)}")
-        self.ffmpeg_proc = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+        self.ffmpeg_proc = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        # self.stop_recording()
 
     def stop_recording(self):
         if not self.ffmpeg_proc:
             return
         self.ffmpeg_proc.terminate()
         self.ffmpeg_proc.wait()
-        logger.info(f"Stopped debug screen recorder for display with dimensions {self.screen_dimensions} and file location {self.file_location}")
+        logger.info(
+            f"Stopped debug screen recorder for display with dimensions {self.screen_dimensions} and file location {self.file_location}")
 
     def get_seekable_path(self, path):
         """

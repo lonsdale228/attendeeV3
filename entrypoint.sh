@@ -4,7 +4,7 @@
 rm -rf /var/run/pulse /var/lib/pulse /root/.config/pulse
 
 # Start PulseAudio in daemon mode
-pulseaudio -D --exit-idle-time=-1
+pulseaudio -D --exit-idle-time=-1 --system
 
 # Give PulseAudio time to initialize (optional)
 sleep 1

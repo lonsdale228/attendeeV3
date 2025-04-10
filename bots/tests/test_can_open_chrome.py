@@ -9,7 +9,7 @@ class TestChromeDriver(TransactionTestCase):
     def test_can_open_google(self):
         # Create virtual display if no real display is available
         if os.environ.get("DISPLAY") is None:
-            display = Display(visible=0, size=(1920, 1080))
+            display = Display(visible=True, size=(1920, 1080))
             display.start()
 
         try:
