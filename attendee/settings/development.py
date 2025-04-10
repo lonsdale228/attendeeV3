@@ -3,7 +3,7 @@ import os
 from .base import *
 
 DEBUG = True
-ALLOWED_HOSTS = ["tendee-stripe-hooks.ngrok.io", "localhost"]
+ALLOWED_HOSTS = ["tendee-stripe-hooks.ngrok.io", "localhost", "127.0.0.1"]
 
 DATABASES = {
     "default": {

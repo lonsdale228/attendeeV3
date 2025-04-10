@@ -90,28 +90,12 @@ class BotController:
     def get_zoom_bot_adapter(self):
         from bots.zoom_bot_adapter import ZoomBotAdapter
 
-        zoom_oauth_credentials_record = self.bot_in_db.project.credentials.filter(credential_type=Credentials.CredentialTypes.ZOOM_OAUTH).first()
-        if not zoom_oauth_credentials_record:
-            raise Exception("Zoom OAuth credentials not found")
-
-        zoom_oauth_credentials = zoom_oauth_credentials_record.get_credentials()
-        if not zoom_oauth_credentials:
-            raise Exception("Zoom OAuth credentials data not found")
-
         return ZoomBotAdapter(
-            use_one_way_audio=self.pipeline_configuration.transcribe_audio,
-            use_mixed_audio=self.pipeline_configuration.record_audio or self.pipeline_configuration.rtmp_stream_audio,
-            use_video=self.pipeline_configuration.record_video or self.pipeline_configuration.rtmp_stream_video,
+            # Only pass supported parameters
             display_name=self.bot_in_db.name,
             send_message_callback=self.on_message_from_adapter,
-            add_audio_chunk_callback=self.individual_audio_input_manager.add_chunk,
-            zoom_client_id=zoom_oauth_credentials["client_id"],
-            zoom_client_secret=zoom_oauth_credentials["client_secret"],
             meeting_url=self.bot_in_db.meeting_url,
-            add_video_frame_callback=self.gstreamer_pipeline.on_new_video_frame,
-            wants_any_video_frames_callback=self.gstreamer_pipeline.wants_any_video_frames,
-            add_mixed_audio_chunk_callback=self.gstreamer_pipeline.on_mixed_audio_raw_data_received_callback,
-            automatic_leave_configuration=self.automatic_leave_configuration,
+            automatic_leave_configuration=self.automatic_leave_configuration
         )
 
     def get_meeting_type(self):

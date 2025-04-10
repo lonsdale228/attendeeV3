@@ -31,24 +31,31 @@ class WebBotAdapter(BotAdapter):
         display_name,
         send_message_callback,
         meeting_url,
-        add_video_frame_callback,
-        wants_any_video_frames_callback,
-        add_mixed_audio_chunk_callback,
-        add_encoded_mp4_chunk_callback,
-        upsert_caption_callback,
-        automatic_leave_configuration: AutomaticLeaveConfiguration,
-        recording_view: RecordingViews,
-        should_create_debug_recording: bool,
-        start_recording_screen_callback,
-        stop_recording_screen_callback,
+        automatic_leave_configuration,
+        # Common media parameters with defaults
+        add_video_frame_callback=None,
+        wants_any_video_frames_callback=lambda: False,
+        add_mixed_audio_chunk_callback=None,
+        add_encoded_mp4_chunk_callback=None,
+        upsert_caption_callback=None,
+        recording_view=None,
+        should_create_debug_recording=False,
+        start_recording_screen_callback=None,
+        stop_recording_screen_callback=None
     ):
+        # Initialize common parameters
         self.display_name = display_name
         self.send_message_callback = send_message_callback
-        self.add_mixed_audio_chunk_callback = add_mixed_audio_chunk_callback
+        self.meeting_url = meeting_url
+        self.automatic_leave_configuration = automatic_leave_configuration
+        # Media parameters with defaults
         self.add_video_frame_callback = add_video_frame_callback
         self.wants_any_video_frames_callback = wants_any_video_frames_callback
+        self.add_mixed_audio_chunk_callback = add_mixed_audio_chunk_callback
         self.add_encoded_mp4_chunk_callback = add_encoded_mp4_chunk_callback
         self.upsert_caption_callback = upsert_caption_callback
+        self.recording_view = recording_view
+        self.should_create_debug_recording = should_create_debug_recording
         self.start_recording_screen_callback = start_recording_screen_callback
         self.stop_recording_screen_callback = stop_recording_screen_callback
         self.recording_view = recording_view
