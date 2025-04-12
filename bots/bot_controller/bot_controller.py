@@ -98,7 +98,7 @@ class BotController:
             recording_view=self.bot_in_db.recording_view(),
             start_recording_screen_callback=self.screen_and_audio_recorder.start_recording,
             stop_recording_screen_callback=self.screen_and_audio_recorder.stop_recording,
-            automatic_leave_configuration=self.automatic_leave_configuration
+            automatic_leave_configuration=self.automatic_leave_configuration,
         )
 
     def get_meeting_type(self):

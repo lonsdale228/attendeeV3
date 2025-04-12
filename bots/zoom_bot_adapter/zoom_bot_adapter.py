@@ -123,7 +123,7 @@ class ZoomBotAdapter(WebBotAdapter, ZoomUIMethods):
         """
         while not self.left_meeting:
             try:
-                modal_element = self.driver.find_element(By.CSS_SELECTOR, 'div[aria-label="Meeting is end now"]')
+                modal_element = self.driver.find_element(By.CSS_SELECTOR, 'div[aria-label="Meeting is end now"], div[aria-label="You have been removed"]')
                 if modal_element:
                     logger.info("Detected meeting end modal, triggering click_leave_button()")
                     self.click_leave_button()

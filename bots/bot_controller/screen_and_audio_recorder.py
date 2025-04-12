@@ -2,9 +2,86 @@ import logging
 import os
 import subprocess
 import time
+from datetime import datetime
+from typing import Optional
+
+from bots.bot_controller.speech_to_text import transcribe_audio
+from bots.models import Participant, Utterance, Recording
 
 logger = logging.getLogger(__name__)
 
+
+def get_default_closed_caption_participant() -> 'Participant':
+    """
+    Returns a default Participant instance to be used for closed caption utterances.
+    You can modify this to either lookup an existing default participant or create one.
+    """
+    # Example: try to get an existing default participant by a unique identifier.
+    # You might need to adjust the lookup based on your Participant model.
+    try:
+        participant = Participant.objects.get(name="Closed Caption")
+    except Participant.DoesNotExist:
+        # Create one if not found. Adjust required fields as necessary.
+        participant = Participant.objects.create(name="Closed Caption")
+    return participant
+
+
+def create_utterance_from_closed_caption(
+        recording: Recording,
+        caption_data: dict,
+        created_at: Optional[datetime] = None,
+        modified_at: Optional[datetime] = None,
+) -> None:
+    """
+    Creates and saves an Utterance from closed caption data for the given Recording.
+
+    Parameters:
+      recording (Recording): The Recording instance for the utterance.
+      caption_data (dict): Dictionary containing the closed caption details.
+         Expected keys: "deviceId", "captionId", "text", etc.
+      created_at (datetime, optional): Creation timestamp of the caption.
+         Defaults to now if not provided.
+      modified_at (datetime, optional): Last modified timestamp of the caption.
+         Defaults to the same as created_at if not provided.
+
+    Notes:
+      - The utterance uses a dummy audio blob (empty bytes) since closed captions typically
+        have no audio associated.
+      - The participant is set to a default closed caption participant.
+    """
+    # Use provided timestamps or default to current UTC time.
+    now = datetime.now()
+    if created_at is None:
+        created_at = now
+    if modified_at is None:
+        modified_at = created_at
+
+    # Retrieve or create the default closed caption participant.
+    default_participant = get_default_closed_caption_participant()
+
+    # Build a source_uuid using a known prefix and unique identifiers
+    source_uuid = f"closed_caption-{caption_data.get('deviceId')}-{caption_data.get('captionId')}"
+
+    # Create the Utterance instance.
+    utterance = Utterance(
+        recording=recording,
+        participant=default_participant,
+        # Since closed captions don't have associated audio, we use an empty binary blob.
+        audio_blob=b"",
+        # Using a default audio format (PCM in this case).
+        audio_format=Utterance.AudioFormat.PCM,
+        # Convert timestamps to milliseconds.
+        timestamp_ms=int(created_at.timestamp() * 1000),
+        duration_ms=int((modified_at - created_at).total_seconds() * 1000),
+        # Save the caption text as the transcription; you could also store more complex JSON.
+        transcription={"text": caption_data.get("text", "")},
+        source_uuid=source_uuid,
+        sample_rate=None,
+        # Specify that this utterance is coming from closed caption data.
+        source=Utterance.Sources.CLOSED_CAPTION_FROM_PLATFORM,
+    )
+
+    utterance.save()
 
 class ScreenAndAudioRecorder:
     def __init__(self, file_location):
@@ -33,26 +110,41 @@ class ScreenAndAudioRecorder:
         # ])
 
         logger.info(f"Start montoring on: {virt_cable_token} token")
+
+        # audio and video
+        # ffmpeg_cmd = [
+        #     "ffmpeg", "-y",
+        #     "-thread_queue_size", "4096",
+        #     "-framerate", "30",
+        #     "-video_size", f"{self.screen_dimensions[0]}x{self.screen_dimensions[1]}",
+        #     "-f", "x11grab",
+        #     "-draw_mouse", "0",
+        #     "-probesize", "32",
+        #     "-i", display_var,
+        #     "-ac", "2",
+        #     "-ar", "44100",
+        #     "-f", "pulse",
+        #     "-i", f"{virt_cable_token}.monitor",
+        #     "-vf", "crop=1920:1080:10:10",
+        #     "-c:v", "libx264",
+        #     "-preset", "ultrafast",
+        #     "-pix_fmt", "yuv420p",
+        #     "-g", "30",
+        #     "-c:a", "aac",
+        #     "-strict", "experimental",
+        #     "-b:a", "128k",
+        #     self.file_location
+        # ]
+
+        # audio only
         ffmpeg_cmd = [
             "ffmpeg", "-y",
             "-thread_queue_size", "4096",
-            "-framerate", "30",
-            "-video_size", f"{self.screen_dimensions[0]}x{self.screen_dimensions[1]}",
-            "-f", "x11grab",
-            "-draw_mouse", "0",
-            "-probesize", "32",
-            "-i", display_var,
+            "-f", "pulse",
             "-ac", "2",
             "-ar", "44100",
-            "-f", "pulse",
             "-i", f"{virt_cable_token}.monitor",
-            "-vf", "crop=1920:1080:10:10",
-            "-c:v", "libx264",
-            "-preset", "ultrafast",
-            "-pix_fmt", "yuv420p",
-            "-g", "30",
             "-c:a", "aac",
-            "-strict", "experimental",
             "-b:a", "128k",
             self.file_location
         ]
@@ -93,7 +185,11 @@ class ScreenAndAudioRecorder:
             return
 
         output_path = self.get_seekable_path(self.file_location)
-        # the file is seekable, so we don't need to make it seekable
+
+        # create_utterance_from_closed_caption()
+
+        transcribe_audio(input_path)
+
         self.make_file_seekable(input_path, output_path)
 
     def make_file_seekable(self, input_path, tempfile_path):
