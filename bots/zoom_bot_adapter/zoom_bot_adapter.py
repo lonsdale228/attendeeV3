@@ -72,14 +72,14 @@ class ZoomBotAdapter(WebBotAdapter, ZoomUIMethods):
     def get_websocket_port(self):
         return 8768  # Different port from Google Meet
 
-    def attempt_to_join_meeting(self):
-        subprocess.Popen([
-            "pulseaudio", "-D", "--exit-idle-time=-1", "--system"
-        ])
+    def attempt_to_join_meeting(self, virt_cable_token):
 
-        subprocess.run([
-            "pactl", "load-module", "module-null-sink", "sink_name=virt"
-        ])
+
+        # result = subprocess.Popen([
+        #     "pactl", "load-module", "module-null-sink", f"sink_name={virt_cable_token}"
+        # ])
+
+        # logger.info(f"Running virt cable: {result},{result.stdout},{result.stderr}")
 
         from urllib import parse
 

@@ -3,6 +3,8 @@ import datetime
 import json
 import logging
 import os
+import secrets
+import subprocess
 import threading
 import time
 from time import sleep
@@ -292,7 +294,7 @@ class WebBotAdapter(BotAdapter):
             }
         )
 
-    def init_driver(self):
+    def init_driver(self, virt_cable_token):
         options = webdriver.ChromeOptions()
 
         options.add_argument("--use-fake-ui-for-media-stream")
@@ -327,6 +329,16 @@ class WebBotAdapter(BotAdapter):
             except Exception as e:
                 logger.info(f"Error closing existing driver: {e}")
             self.driver = None
+
+        os.environ['PULSE_SINK'] = virt_cable_token
+
+        subprocess.Popen([
+            "pulseaudio", "-D", "--exit-idle-time=-1", "--system"
+        ])
+        time.sleep(1)
+        subprocess.Popen([
+            "pactl", "load-module", "module-null-sink", f"sink_name={virt_cable_token}"
+        ])
 
         self.driver = webdriver.Chrome(options=options)
         logger.info(f"web driver server initialized at port {self.driver.service.port}")
@@ -391,10 +403,11 @@ class WebBotAdapter(BotAdapter):
         num_expected_exceptions = 0
         num_retries = 0
         max_retries = 2
+        virt_cable_token = secrets.token_hex(8)
         while num_retries <= max_retries:
             try:
-                self.init_driver()
-                self.attempt_to_join_meeting()
+                self.init_driver(virt_cable_token)
+                self.attempt_to_join_meeting(virt_cable_token)
                 logger.info("Successfully joined meeting")
                 break
 
@@ -447,7 +460,7 @@ class WebBotAdapter(BotAdapter):
             sleep(2)
             if self.debug_screen_recorder:
                 self.debug_screen_recorder.stop()
-            self.start_recording_screen_callback(self.display_var_for_debug_recording)
+            self.start_recording_screen_callback(self.display_var_for_debug_recording, virt_cable_token)
 
         self.media_sending_enable_timestamp_ms = time.time() * 1000
 

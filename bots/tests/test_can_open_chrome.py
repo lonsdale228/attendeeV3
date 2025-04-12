@@ -15,7 +15,7 @@ class TestChromeDriver(TransactionTestCase):
         try:
             # Set up Chrome options
             options = webdriver.ChromeOptions()
-            options.add_argument("--use-fake-ui-for-media-stream")
+            options.add_argument("  --use-fake-ui-for-media-stream")
             options.add_argument("--start-maximized")
             options.add_argument("--no-sandbox")
             options.add_argument("--disable-gpu")

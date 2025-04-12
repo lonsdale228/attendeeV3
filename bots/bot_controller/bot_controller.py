@@ -295,6 +295,8 @@ class BotController:
         channel = f"bot_{self.bot_in_db.id}"
         pubsub.subscribe(channel)
 
+        logger.info("RUNNED!")
+
         # Initialize core objects
         # Only used for adapters that can provide per-participant audio
         self.individual_audio_input_manager = IndividualAudioInputManager(

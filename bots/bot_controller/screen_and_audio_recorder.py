@@ -12,7 +12,7 @@ class ScreenAndAudioRecorder:
         self.ffmpeg_proc = None
         self.screen_dimensions = (1920, 1080)
 
-    def start_recording(self, display_var):
+    def start_recording(self, display_var, virt_cable_token):
         logger.info(
             f"Starting screen recorder for display {display_var} with dimensions {self.screen_dimensions} and file location {self.file_location}")
         # ffmpeg_cmd = ["ffmpeg", "-y", "-thread_queue_size", "4096", "-framerate", "30", "-video_size", f"{self.screen_dimensions[0]}x{self.screen_dimensions[1]}", "-f", "x11grab", "-draw_mouse", "0", "-probesize", "32", "-i", display_var, "-thread_queue_size", "4096", "-f", "pulse", "-i", "default", "-vf", "crop=1920:1080:10:10", "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p", "-g", "30", "-c:a", "aac", "-strict", "experimental", "-b:a", "128k", self.file_location]
@@ -25,9 +25,14 @@ class ScreenAndAudioRecorder:
         # "-f", "pulse",
 
         # subprocess.run([
-        #     "pulseaudio", "-D", "--exit-idle-time=-1", "--system"
+        #     "", "-D", "--exit-idle-time=-1", "--system"
         # ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
+        # subprocess.Popen([
+        #     "pactl", "load-module", "module-null-sink", f"sink_name={virt_cable_token}"
+        # ])
+
+        logger.info(f"Start montoring on: {virt_cable_token} token")
         ffmpeg_cmd = [
             "ffmpeg", "-y",
             "-thread_queue_size", "4096",
@@ -40,7 +45,7 @@ class ScreenAndAudioRecorder:
             "-ac", "2",
             "-ar", "44100",
             "-f", "pulse",
-            "-i", "default",
+            "-i", f"{virt_cable_token}.monitor",
             "-vf", "crop=1920:1080:10:10",
             "-c:v", "libx264",
             "-preset", "ultrafast",
