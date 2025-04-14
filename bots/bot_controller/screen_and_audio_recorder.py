@@ -145,7 +145,7 @@ class ScreenAndAudioRecorder:
             "-ar", "44100",
             "-i", f"{virt_cable_token}.monitor",
             "-c:a", "aac",
-            "-b:a", "128k",
+            "-b:a", "96k",
             self.file_location
         ]
 
