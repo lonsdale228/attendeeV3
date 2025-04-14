@@ -1,5 +1,6 @@
 import logging
 import os
+import threading
 
 from deepgram import (
     DeepgramClient,
@@ -13,17 +14,19 @@ logger = logging.getLogger(__name__)
 API_KEY = os.getenv("DEEPGRAM_API_KEY")
 SERVER_URL = os.getenv("SERVER_URL")
 
-def send_transcription_to_server(text: str):
-    payload = text
+def send_task(url, payload, log):
     try:
-        response = requests.post(SERVER_URL, data=payload, timeout=10)
+        response = requests.post(url, data=payload, timeout=10)
         if response.status_code == 200:
-            logger.info(f"Transcription sent to server successfully")
+            log.info(f"Transcription sent to server successfully")
         else:
-            logger.error(f"Transcription failed to send to server. Status code: {response.status_code}")
+            log.error(f"Transcription failed to send to server. Status code: {response.status_code}")
     except Exception as e:
-        logger.error(f"Error sending transcription to server: {e}")
+        log.error(f"Error sending transcription to server: {e}")
 
+def send_transcription_to_server(text: str):
+    thread = threading.Thread(target=send_task, args=(SERVER_URL, text, logger))
+    thread.start()
 
 
 
