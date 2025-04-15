@@ -49,11 +49,15 @@ def transcribe_audio(audio_file: str, meeting_id):
     response = deepgram.listen.rest.v("1").transcribe_file(payload, options)
     json = response.to_json(indent=4)
 
-    json['meeting_id'] = str(meeting_id)
+    json_dict = json.loads(json)
 
-    logger.info(f"{json}")
+    json_dict['meeting_id'] = str(meeting_id)
 
-    send_transcription_to_server(json, meeting_id)
+    json_str_updated = json.dumps(json_dict, indent=4)
+
+    logger.info(f"{json_str_updated}")
+
+    send_transcription_to_server(json_str_updated, meeting_id)
 
 # def main():
 #     try:
