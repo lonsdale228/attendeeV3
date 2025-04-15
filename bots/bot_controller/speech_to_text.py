@@ -16,7 +16,7 @@ SERVER_URL = os.getenv("SERVER_URL")
 
 def send_task(url, payload, log):
     try:
-        response = requests.post(url, data=payload, timeout=10)
+        response = requests.post(url, json=payload, timeout=20)
         if response.status_code == 200:
             log.info(f"Transcription sent to server successfully")
         else:
