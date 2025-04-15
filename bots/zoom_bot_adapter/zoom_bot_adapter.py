@@ -56,6 +56,7 @@ class ZoomBotAdapter(WebBotAdapter, ZoomUIMethods):
             **kwargs
     ):
         # Filter out platform-specific parameters
+        self.meeting_id = None
         filtered_kwargs = {k: v for k, v in kwargs.items()
                            if k not in ['use_one_way_audio', 'use_mixed_audio', 'use_video']}
 
@@ -85,6 +86,8 @@ class ZoomBotAdapter(WebBotAdapter, ZoomUIMethods):
 
         parsed_url = parse.urlparse(self.meeting_url)
         conf_id = parsed_url.path.split("/j/")[-1]
+
+        self.meeting_id = conf_id
 
         url = f"https://zoom.us/wc/join/{conf_id}"
         self.driver.execute_cdp_cmd(

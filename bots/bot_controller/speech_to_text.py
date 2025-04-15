@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 API_KEY = os.getenv("DEEPGRAM_API_KEY")
 SERVER_URL = os.getenv("SERVER_URL")
 
-def send_task(url, payload, log):
+def send_task(url, payload, log, meeting_id):
     try:
         response = requests.post(url, json=payload, timeout=20)
         if response.status_code == 200:
@@ -24,13 +24,13 @@ def send_task(url, payload, log):
     except Exception as e:
         log.error(f"Error sending transcription to server: {e}")
 
-def send_transcription_to_server(text: str):
-    thread = threading.Thread(target=send_task, args=(SERVER_URL, text, logger))
+def send_transcription_to_server(text: str, meeting_id):
+    thread = threading.Thread(target=send_task, args=(SERVER_URL, text, logger, meeting_id))
     thread.start()
 
 
 
-def transcribe_audio(audio_file: str):
+def transcribe_audio(audio_file: str, meeting_id):
     deepgram = DeepgramClient(api_key=API_KEY)
 
     with open(audio_file, "rb") as file:
@@ -48,9 +48,12 @@ def transcribe_audio(audio_file: str):
 
     response = deepgram.listen.rest.v("1").transcribe_file(payload, options)
     json = response.to_json(indent=4)
+
+    json['meeting_id'] = str(meeting_id)
+
     logger.info(f"{json}")
 
-    send_transcription_to_server(json)
+    send_transcription_to_server(json, meeting_id)
 
 # def main():
 #     try:

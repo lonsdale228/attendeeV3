@@ -214,7 +214,7 @@ class BotController:
 
         if self.screen_and_audio_recorder:
             logger.info("Telling media recorder receiver to cleanup...")
-            self.screen_and_audio_recorder.cleanup()
+            self.screen_and_audio_recorder.cleanup(self.adapter.meeting_id)
 
         if self.get_recording_file_location():
             logger.info("Telling file uploader to upload recording file...")

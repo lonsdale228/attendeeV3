@@ -169,7 +169,7 @@ class ScreenAndAudioRecorder:
         base, ext = os.path.splitext(path)
         return f"{base}.seekable{ext}"
 
-    def cleanup(self):
+    def cleanup(self, meeting_id=None):
         input_path = self.file_location
 
         # Check if input file exists
@@ -188,7 +188,7 @@ class ScreenAndAudioRecorder:
 
         # create_utterance_from_closed_caption()
 
-        transcribe_audio(input_path)
+        transcribe_audio(input_path, meeting_id)
 
         self.make_file_seekable(input_path, output_path)
 
