@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import threading
@@ -47,9 +48,9 @@ def transcribe_audio(audio_file: str, meeting_id):
     )
 
     response = deepgram.listen.rest.v("1").transcribe_file(payload, options)
-    json = response.to_json(indent=4)
+    js = response.to_json(indent=4)
 
-    json_dict = json.loads(json)
+    json_dict = json.loads(js)
 
     json_dict['meeting_id'] = str(meeting_id)
 
