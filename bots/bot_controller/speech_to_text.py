@@ -48,6 +48,7 @@ def transcribe_audio(audio_file: str, meeting_id):
     options = PrerecordedOptions(
         model="nova-3",
         smart_format=True,
+        diarize=True,
         detect_language=True,
     )
 
