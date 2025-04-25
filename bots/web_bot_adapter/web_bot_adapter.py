@@ -25,6 +25,8 @@ from .ui_methods import UiMeetingNotFoundException, UiRequestToJoinDeniedExcepti
 
 logger = logging.getLogger(__name__)
 
+from undetected_chromedriver import Chrome, ChromeOptions, WebElement
+import undetected_chromedriver as uc
 
 class WebBotAdapter(BotAdapter):
     def __init__(
@@ -295,7 +297,7 @@ class WebBotAdapter(BotAdapter):
         )
 
     def init_driver(self, virt_cable_token):
-        options = webdriver.ChromeOptions()
+        options = uc.ChromeOptions()
 
         options.add_argument("--use-fake-ui-for-media-stream")
         options.add_argument(f"--window-size={self.video_frame_size[0]},{self.video_frame_size[1]}")
@@ -308,7 +310,7 @@ class WebBotAdapter(BotAdapter):
         options.add_argument("--disable-setuid-sandbox")
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-blink-features=AutomationControlled")
-        options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        # options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_argument("--password-store=basic")
         options.add_experimental_option(
             "prefs",
@@ -340,7 +342,7 @@ class WebBotAdapter(BotAdapter):
             "pactl", "load-module", "module-null-sink", f"sink_name={virt_cable_token}"
         ])
 
-        self.driver = webdriver.Chrome(options=options)
+        self.driver = uc.Chrome(options=options)
         logger.info(f"web driver server initialized at port {self.driver.service.port}")
 
         initial_data_code = f"window.initialData = {{websocketPort: {self.websocket_port}, addClickRipple: {'true' if self.should_create_debug_recording else 'false'}, recordingView: '{self.recording_view}'}}"
