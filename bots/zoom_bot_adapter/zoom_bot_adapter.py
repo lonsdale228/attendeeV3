@@ -73,6 +73,29 @@ class ZoomBotAdapter(WebBotAdapter, ZoomUIMethods):
     def get_websocket_port(self):
         return 8768  # Different port from Google Meet
 
+    def load_cookies_from_file(self, filepath):
+        cookies = []
+        with open(filepath, 'r') as file:
+            for line in file:
+                line = line.strip()
+                if not line or line.startswith('#'):
+                    continue  # skip comments and empty lines
+                parts = line.split('\t')
+                if len(parts) != 7:
+                    continue  # malformed line
+                domain, flag, path, secure, expiry, name, value = parts
+                cookie = {
+                    'domain': domain,
+                    'name': name,
+                    'value': value,
+                    'path': path,
+                    'secure': secure.upper() == 'TRUE',
+                }
+                if expiry.isdigit() and int(expiry) != 0:
+                    cookie['expiry'] = int(expiry)
+                cookies.append(cookie)
+        return cookies
+
     def attempt_to_join_meeting(self, virt_cable_token):
 
 
@@ -102,6 +125,18 @@ class ZoomBotAdapter(WebBotAdapter, ZoomUIMethods):
                 ],
             },
         )
+        self.driver.get("https://zoom.us")
+        time.sleep(2)
+
+        cookie_file_path = 'app.zoom.us_cookies.txt'
+        cookies = self.load_cookies_from_file(cookie_file_path)
+
+        for cookie in cookies:
+            try:
+                self.driver.add_cookie(cookie)
+            except Exception as e:
+                logger.error(f"Error adding cookie {cookie['name']}: {e}")
+
         self.driver.get(url)
         self.join_meeting(self.meeting_url)
 
