@@ -32,6 +32,8 @@ class ZoomUIMethods:
             query_params = parse.parse_qs(parsed_url.query)
             pwd = query_params.get("pwd", [None])[0]
 
+            self.driver.get_screenshot_as_file(f"LambdaTestVisibleScreen_{uuid1()}.png")
+
             name_field = self.locate_by_id('input-for-name')
             time.sleep(1)
             name_field.send_keys("Jopa")
