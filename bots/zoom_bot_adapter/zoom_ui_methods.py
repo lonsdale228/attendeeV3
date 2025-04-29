@@ -34,9 +34,11 @@ class ZoomUIMethods:
 
             self.driver.get_screenshot_as_file(f"LambdaTestVisibleScreen_{uuid1()}.png")
 
+            iframe = self.locate_by_id('webclient')
+            self.driver.switch_to.frame(iframe)
+
             try:
                 agree_btn = self.locate_by_id('wc_agree1')
-                self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", agree_btn)
                 agree_btn.click()
             except Exception as e:
                 logging.error(f"Agree button not found: {str(e)}")
