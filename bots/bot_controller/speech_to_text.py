@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 import os
@@ -61,7 +62,10 @@ def transcribe_audio(audio_file: str, meeting_id):
 
     json_str_updated = json.dumps(json_dict, indent=4)
 
-    logger.info(f"{json_str_updated}")
+    with open("transcriptions/"+str(meeting_id)+datetime.datetime.now().strftime("%H_%M_%S") + ".json", "w") as f:
+        f.write(json_str_updated)
+
+    # logger.info(f"{json_str_updated}")
 
     send_transcription_to_server(json_str_updated, meeting_id)
 
