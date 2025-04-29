@@ -125,7 +125,7 @@ class ZoomBotAdapter(WebBotAdapter, ZoomUIMethods):
                 ],
             },
         )
-        self.driver.get("https://zoom.us")
+        self.driver.get("https://app.zoom.us/wc/join")
         time.sleep(2)
 
         cookie_file_path = 'app.zoom.us_cookies.txt'
