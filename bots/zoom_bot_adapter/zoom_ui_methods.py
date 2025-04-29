@@ -34,6 +34,16 @@ class ZoomUIMethods:
 
             self.driver.get_screenshot_as_file(f"LambdaTestVisibleScreen_{uuid1()}.png")
 
+            try:
+                agree_btn = WebDriverWait(self.driver, 10).until(
+                    EC.element_to_be_clickable((By.XPATH, "//button[normalize-space(text())='I Agree']"))
+                )
+                agree_btn.click()
+            except Exception as e:
+                logging.error(f"Agree button not found: {str(e)}")
+
+            self.driver.get_screenshot_as_file(f"LambdaTestVisibleScreen_{uuid1()}.png")
+
             name_field = self.locate_by_id('input-for-name')
             time.sleep(1)
             name_field.send_keys("Jopa")
