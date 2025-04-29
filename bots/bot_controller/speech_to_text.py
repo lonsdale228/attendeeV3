@@ -62,7 +62,9 @@ def transcribe_audio(audio_file: str, meeting_id):
 
     json_str_updated = json.dumps(json_dict, indent=4)
 
-    with open("transcriptions/"+str(meeting_id)+datetime.datetime.now().strftime("%H_%M_%S") + ".json", "w") as f:
+    os.makedirs('transcriptions', exist_ok=True)
+
+    with open(f'transcriptions/{meeting_id}_{datetime.datetime.now().strftime("%H_%M_%S")}.json', "w") as f:
         f.write(json_str_updated)
 
     # logger.info(f"{json_str_updated}")
