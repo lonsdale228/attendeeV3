@@ -25,7 +25,7 @@ def send_task(url, payload, log):
         if (response.status_code == 200) or (response.status_code == 201):
             log.info(f"Transcription sent to server successfully")
         else:
-            log.error(f"{payload}")
+            # log.error(f"{payload}")
             log.error(f"Transcription failed to send to server. Status code: {response.status_code}")
     except Exception as e:
         log.error(f"Error sending transcription to server: {e}")
