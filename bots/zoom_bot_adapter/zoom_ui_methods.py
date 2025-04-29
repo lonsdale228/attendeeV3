@@ -34,15 +34,21 @@ class ZoomUIMethods:
 
             self.driver.get_screenshot_as_file(f"LambdaTestVisibleScreen_{uuid1()}.png")
 
-            # WebDriverWait(self.driver, 10).until(
-            #     EC.frame_to_be_available_and_switch_to_it((By.ID, "webclient"))
-            # )
-            #
-            # # 2) hide the cookie‐banner overlay
-            # self.driver.execute_script("""
-            #   var over = document.getElementById('onetrust-policy-text');
-            #   if(over){ over.style.display='none'; }
-            # """)
+            # --- STEP 1: agree to TOS inside the first iframe ---
+            WebDriverWait(self.driver, 10).until(
+                EC.frame_to_be_available_and_switch_to_it((By.ID, "webclient"))
+            )
+            # hide OneTrust banner if needed...
+            self.driver.execute_script("document.getElementById('onetrust-policy-text')?.remove();")
+            # click “I Agree”
+            js_click = "arguments[0].scrollIntoView({block:'center'}); arguments[0].click();"
+            agree = WebDriverWait(self.driver, 20).until(
+                EC.presence_of_element_located((By.ID, "wc_agree1"))
+            )
+            self.driver.execute_script(js_click, agree)
+
+            # --- STEP 2: switch back to main document so we can catch the next iframe load ---
+            self.driver.switch_to.default_content()
 
             try:
                 agree_btn = self.locate_by_id('wc_agree1')
