@@ -34,8 +34,15 @@ class ZoomUIMethods:
 
             self.driver.get_screenshot_as_file(f"LambdaTestVisibleScreen_{uuid1()}.png")
 
-            iframe = self.locate_by_id('webclient')
-            self.driver.switch_to.frame(iframe)
+            WebDriverWait(self.driver, 10).until(
+                EC.frame_to_be_available_and_switch_to_it((By.ID, "webclient"))
+            )
+
+            # 2) hide the cookie‐banner overlay
+            self.driver.execute_script("""
+              var over = document.getElementById('onetrust-policy-text');
+              if(over){ over.style.display='none'; }
+            """)
 
             try:
                 agree_btn = self.locate_by_id('wc_agree1')
