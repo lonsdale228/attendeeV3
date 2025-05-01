@@ -343,7 +343,7 @@ class WebBotAdapter(BotAdapter):
             "pactl", "load-module", "module-null-sink", f"sink_name={virt_cable_token}"
         ])
 
-        self.driver = uc.Chrome(options=options)
+        self.driver = uc.Chrome(options=options, version_main=135)
         logger.info(f"web driver server initialized at port {self.driver.service.port}")
 
         initial_data_code = f"window.initialData = {{websocketPort: {self.websocket_port}, addClickRipple: {'true' if self.should_create_debug_recording else 'false'}, recordingView: '{self.recording_view}'}}"
