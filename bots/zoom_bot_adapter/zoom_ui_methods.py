@@ -37,7 +37,7 @@ class ZoomUIMethods:
 
             name_field = self.locate_by_id('input-for-name')
             time.sleep(1)
-            name_field.send_keys("Jopa")
+            name_field.send_keys("Skriba Bot")
 
             self.driver.get_screenshot_as_file(f"LambdaTestVisibleScreen_{uuid1()}.png")
 
