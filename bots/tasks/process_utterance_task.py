@@ -10,7 +10,7 @@ from bots.models import Credentials, RecordingManager, Utterance
 
 @shared_task(
     bind=True,
-    soft_time_limit=3600,
+    soft_time_limit=86400,
     autoretry_for=(DatabaseError,),
     retry_backoff=True,  # Enable exponential backoff
     max_retries=5,
