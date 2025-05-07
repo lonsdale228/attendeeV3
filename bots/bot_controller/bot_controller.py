@@ -185,7 +185,7 @@ class BotController:
         def terminate_worker():
             import time
 
-            time.sleep(20)
+            time.sleep(3600)
             if normal_quitting_process_worked:
                 logger.info("Normal quitting process worked, not force terminating worker")
                 return
