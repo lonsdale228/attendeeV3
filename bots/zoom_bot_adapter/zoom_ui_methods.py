@@ -1,4 +1,5 @@
 import logging
+import os
 import time
 from uuid import uuid1
 
@@ -9,6 +10,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 
 class ZoomUIMethods:
+    DO_SCR = False
+
     def locate_zoom_element(self, selector, timeout=30):
         return WebDriverWait(self.driver, timeout).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, selector))
@@ -24,6 +27,11 @@ class ZoomUIMethods:
             EC.presence_of_element_located((By.ID, selector))
         )
 
+    def make_screenshot(self):
+        os.makedirs("screenshots", exist_ok=True)
+        if self.DO_SCR:
+            self.driver.get_screenshot_as_file(f"screenshots/Screen_{uuid1()}.png")
+
     def join_meeting(self, url):
         try:
             from urllib import parse
@@ -32,14 +40,13 @@ class ZoomUIMethods:
             query_params = parse.parse_qs(parsed_url.query)
             pwd = query_params.get("pwd", [None])[0]
 
-
-            self.driver.get_screenshot_as_file(f"LambdaTestVisibleScreen_{uuid1()}.png")
+            self.make_screenshot()
 
             name_field = self.locate_by_id('input-for-name')
             time.sleep(1)
             name_field.send_keys("Skriba Bot")
 
-            self.driver.get_screenshot_as_file(f"LambdaTestVisibleScreen_{uuid1()}.png")
+            self.make_screenshot()
 
             pswd_input = self.locate_by_id('input-for-pwd')
             time.sleep(1)
@@ -49,7 +56,7 @@ class ZoomUIMethods:
             final_join.click()
             time.sleep(1)
 
-            self.driver.get_screenshot_as_file(f"LambdaTestVisibleScreen_{uuid1()}.png")
+            self.make_screenshot()
             # self.handle_meeting_controls()
 
         except Exception as e:

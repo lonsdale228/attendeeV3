@@ -15,9 +15,10 @@ from selenium.webdriver.support.wait import WebDriverWait
 
 from bots.web_bot_adapter import WebBotAdapter
 from bots.zoom_bot_adapter.zoom_ui_methods import ZoomUIMethods
-
+from urllib import parse
 
 logger = logging.getLogger(__name__)
+
 
 def create_black_yuv420_frame(width=640, height=360):
     # Create BGR frame (red is [0,0,0] in BGR)
@@ -45,6 +46,7 @@ def parse_join_url(join_url):
 
     return (meeting_id, password)
 
+
 class ZoomBotAdapter(WebBotAdapter, ZoomUIMethods):
     def __init__(
             self,
@@ -67,6 +69,7 @@ class ZoomBotAdapter(WebBotAdapter, ZoomUIMethods):
             automatic_leave_configuration=automatic_leave_configuration,
             **filtered_kwargs
         )
+
     def get_chromedriver_payload_file_name(self):
         return "zoom_chromedriver_payload.js"
 
@@ -97,15 +100,6 @@ class ZoomBotAdapter(WebBotAdapter, ZoomUIMethods):
         return cookies
 
     def attempt_to_join_meeting(self, virt_cable_token):
-
-
-        # result = subprocess.Popen([
-        #     "pactl", "load-module", "module-null-sink", f"sink_name={virt_cable_token}"
-        # ])
-
-        # logger.info(f"Running virt cable: {result},{result.stdout},{result.stderr}")
-
-        from urllib import parse
 
         parsed_url = parse.urlparse(self.meeting_url)
         conf_id = parsed_url.path.split("/j/")[-1]
@@ -143,17 +137,7 @@ class ZoomBotAdapter(WebBotAdapter, ZoomUIMethods):
         time.sleep(3)
 
         self.start_modal_monitoring()
-        #
-        # time.sleep(15)
-        #
-        # self.click_leave_button()
 
-
-    # def handle_websocket(self, websocket):
-    #     # Similar WebSocket handling as Google Meet but for Zoom's data format
-    #     while True:
-    #         message = websocket.receive()
-    #         # Process Zoom-specific messages
     def monitor_for_meeting_end_modal(self, check_interval=1):
         """
         Check periodically if the meeting ended modal is present.
@@ -161,7 +145,8 @@ class ZoomBotAdapter(WebBotAdapter, ZoomUIMethods):
         """
         while not self.left_meeting:
             try:
-                modal_element = self.driver.find_element(By.CSS_SELECTOR, 'div[aria-label="Meeting is end now"], div[aria-label="You have been removed"]')
+                modal_element = self.driver.find_element(By.CSS_SELECTOR,
+                                                         'div[aria-label="Meeting is end now"], div[aria-label="You have been removed"]')
                 if modal_element:
                     logger.info("Detected meeting end modal, triggering click_leave_button()")
                     self.click_leave_button()

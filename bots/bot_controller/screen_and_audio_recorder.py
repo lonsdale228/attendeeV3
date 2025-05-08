@@ -1,12 +1,14 @@
 import logging
 import os
 import subprocess
+import threading
 import time
 from datetime import datetime
 from typing import Optional
 
-from bots.bot_controller.speech_to_text import transcribe_audio
 from bots.models import Participant, Utterance, Recording
+
+from deepgram import DeepgramClient, LiveTranscriptionEvents, LiveOptions
 
 logger = logging.getLogger(__name__)
 
@@ -83,60 +85,31 @@ def create_utterance_from_closed_caption(
 
     utterance.save()
 
+
 class ScreenAndAudioRecorder:
     def __init__(self, file_location):
         self.file_location = file_location
+        self.transcript_file = f"transcriptions/{datetime.now().strftime('%m_%d_%Y_%H_%M')}.txt"
         self.ffmpeg_proc = None
         self.screen_dimensions = (1920, 1080)
+        self.exit_flag = threading.Event()
+
+        # Initialize Deepgram client
+        self.dg_client = DeepgramClient()
+        self.dg_connection = None
+        self.audio_thread = None
+        self.transcript_file_handle = None
+        self.speaker_map = {}
 
     def start_recording(self, display_var, virt_cable_token):
         logger.info(
             f"Starting screen recorder for display {display_var} with dimensions {self.screen_dimensions} and file location {self.file_location}")
-        # ffmpeg_cmd = ["ffmpeg", "-y", "-thread_queue_size", "4096", "-framerate", "30", "-video_size", f"{self.screen_dimensions[0]}x{self.screen_dimensions[1]}", "-f", "x11grab", "-draw_mouse", "0", "-probesize", "32", "-i", display_var, "-thread_queue_size", "4096", "-f", "pulse", "-i", "default", "-vf", "crop=1920:1080:10:10", "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p", "-g", "30", "-c:a", "aac", "-strict", "experimental", "-b:a", "128k", self.file_location]
-        # ffmpeg_cmd = ["ffmpeg", "-y", "-thread_queue_size", "4096", "-framerate", "30", "-video_size", f"1280x720", "-f", "x11grab", "-draw_mouse", "0", "-probesize", "32", "-i", ":0.0", "-thread_queue_size", "4096", "-f", "pulse", "-i", "default", "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p", "-g", "30", "-c:a", "aac", "-strict", "experimental", "-b:a", "128k", self.file_location]
-        # ffmpeg_cmd = ["ffmpeg", "-y", "-thread_queue_size", "4096", "-framerate", "30", "-video_size",
-        #               f"1920x1080", "-f", "x11grab", "-draw_mouse", "0",
-        #               "-probesize", "32", "-i", ":0", "-thread_queue_size", "4096", "-f", "pulse", "-vf", "crop=1920:1080:10:10", "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt",
-        #               "yuv420p", "-g", "30", "-c:a", "aac", "-strict", "experimental", "-b:a", "128k",
-        #               self.file_location]
-        # "-f", "pulse",
+        logger.info(f"Start monitoring on: {virt_cable_token} token")
 
-        # subprocess.run([
-        #     "", "-D", "--exit-idle-time=-1", "--system"
-        # ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        os.makedirs("transcriptions", exist_ok=True)
+        self.transcript_file_handle = open(self.transcript_file, "a", encoding="utf-8")
 
-        # subprocess.Popen([
-        #     "pactl", "load-module", "module-null-sink", f"sink_name={virt_cable_token}"
-        # ])
-
-        logger.info(f"Start montoring on: {virt_cable_token} token")
-
-        # audio and video
-        # ffmpeg_cmd = [
-        #     "ffmpeg", "-y",
-        #     "-thread_queue_size", "4096",
-        #     "-framerate", "30",
-        #     "-video_size", f"{self.screen_dimensions[0]}x{self.screen_dimensions[1]}",
-        #     "-f", "x11grab",
-        #     "-draw_mouse", "0",
-        #     "-probesize", "32",
-        #     "-i", display_var,
-        #     "-ac", "2",
-        #     "-ar", "44100",
-        #     "-f", "pulse",
-        #     "-i", f"{virt_cable_token}.monitor",
-        #     "-vf", "crop=1920:1080:10:10",
-        #     "-c:v", "libx264",
-        #     "-preset", "ultrafast",
-        #     "-pix_fmt", "yuv420p",
-        #     "-g", "30",
-        #     "-c:a", "aac",
-        #     "-strict", "experimental",
-        #     "-b:a", "128k",
-        #     self.file_location
-        # ]
-
-        # audio only
+        # Modified FFmpeg command to output both AAC file and raw audio for Deepgram
         ffmpeg_cmd = [
             "ffmpeg", "-y",
             "-thread_queue_size", "4096",
@@ -144,22 +117,128 @@ class ScreenAndAudioRecorder:
             "-ac", "2",
             "-ar", "44100",
             "-i", f"{virt_cable_token}.monitor",
-            "-c:a", "aac",
-            "-b:a", "96k",
-            self.file_location
+            "-c:a", "aac", "-b:a", "96k", self.file_location,
+            "-f", "s16le", "-ar", "16000", "-ac", "1", "pipe:1"
         ]
 
         logger.info(f"Starting FFmpeg command: {' '.join(ffmpeg_cmd)}")
-        self.ffmpeg_proc = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        # self.stop_recording()
+        self.ffmpeg_proc = subprocess.Popen(
+            ffmpeg_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            bufsize=0
+        )
+
+        # Initialize Deepgram connection
+        self._start_deepgram()
+
+    def _start_deepgram(self):
+        """Initialize Deepgram connection and start processing audio"""
+        try:
+            self.dg_connection = self.dg_client.listen.websocket.v("1")
+            self.dg_connection.on(LiveTranscriptionEvents.Transcript, self._on_transcript)
+
+            options = LiveOptions(
+                model="nova-3",
+                encoding="linear16",
+                sample_rate=16000,
+                channels=1,
+                punctuate=True,
+                interim_results=True,
+                diarize=True
+            )
+
+            if not self.dg_connection.start(options):
+                logger.error("Failed to connect to Deepgram")
+                return
+
+            # Start audio processing thread
+            self.audio_thread = threading.Thread(target=self._process_audio)
+            self.audio_thread.start()
+
+        except Exception as e:
+            logger.error(f"Deepgram initialization failed: {e}")
+
+    def _process_audio(self):
+        """Read audio from FFmpeg and send to Deepgram"""
+        try:
+            while not self.exit_flag.is_set() and self.ffmpeg_proc.poll() is None:
+                data = self.ffmpeg_proc.stdout.read(4096)
+                if data:
+                    self.dg_connection.send(data)
+        except Exception as e:
+            logger.error(f"Audio processing error: {e}")
+
+    def _on_transcript(self, _, result, **kwargs):
+        try:
+            if not result.channel.alternatives:
+                return
+
+            transcript = result.channel.alternatives[0]
+            sentence = transcript.transcript
+
+            # Skip empty transcripts
+            if len(sentence.strip()) == 0:
+                return
+
+            # Get speaker information
+            speaker_id = transcript.words[0].speaker if transcript.words else 0
+            confidence = transcript.confidence
+
+            # Create speaker label
+            speaker_label = self._get_speaker_label(speaker_id)
+
+            # Get timestamp
+            start_time = transcript.words[0].start if transcript.words else 0
+            end_time = transcript.words[-1].end if transcript.words else 0
+
+            # Format output
+            timestamp = datetime.now().strftime("%H:%M:%S")
+            output = (
+                f"[{timestamp}] {speaker_label} ({confidence:.2f}): {sentence}\n"
+            )
+
+            # Write to file
+            if result.is_final and confidence > 0.5:  # Only write high-confidence final results
+                self.transcript_file_handle.write(output)
+                self.transcript_file_handle.flush()
+                logger.info(f"Transcript saved: {output.strip()}")
+
+        except Exception as e:
+            logger.error(f"Error processing transcript: {e}")
+
+    def _get_speaker_label(self, speaker_id):
+        if speaker_id not in self.speaker_map:
+            # Assign new speaker label (e.g., Speaker 1, Speaker 2)
+            speaker_number = len(self.speaker_map) + 1
+            self.speaker_map[speaker_id] = f"Speaker {speaker_number}"
+        return self.speaker_map[speaker_id]
 
     def stop_recording(self):
-        if not self.ffmpeg_proc:
-            return
-        self.ffmpeg_proc.terminate()
-        self.ffmpeg_proc.wait()
-        logger.info(
-            f"Stopped debug screen recorder for display with dimensions {self.screen_dimensions} and file location {self.file_location}")
+        """Stop recording and clean up resources"""
+        self.exit_flag.set()
+
+        # Stop Deepgram connection
+        if self.dg_connection:
+            self.dg_connection.finish()
+
+        # Stop FFmpeg process
+        if self.ffmpeg_proc:
+            self.ffmpeg_proc.terminate()
+            self.ffmpeg_proc.wait()
+
+        # Wait for audio thread to finish
+        if self.audio_thread and self.audio_thread.is_alive():
+            self.audio_thread.join()
+
+        logger.info(f"Stopped recorder for display with dimensions {self.screen_dimensions}")
+
+        if self.transcript_file_handle:
+            self.transcript_file_handle.close()
+            logger.info(f"Transcript saved to {self.transcript_file}")
+        logger.info("Speaker mapping:")
+        for sid, label in self.speaker_map.items():
+            logger.info(f"  {sid} => {label}")
 
     def get_seekable_path(self, path):
         """
@@ -188,7 +267,7 @@ class ScreenAndAudioRecorder:
 
         # create_utterance_from_closed_caption()
 
-        transcribe_audio(input_path, meeting_id)
+        # transcribe_audio(input_path, meeting_id)
 
         self.make_file_seekable(input_path, output_path)
 
