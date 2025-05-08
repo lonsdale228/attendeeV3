@@ -195,7 +195,7 @@ class ScreenAndAudioRecorder:
             # Format output
             timestamp = datetime.now().strftime("%H:%M:%S")
             output = (
-                f"[{timestamp}] {speaker_label} ({confidence:.2f}): {sentence}\n"
+                f"[{timestamp}] {speaker_label}: {sentence}\n"
             )
 
             # Write to file

@@ -10,7 +10,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 
 class ZoomUIMethods:
-    DO_SCR = False
+    DO_SCR = True
 
     def locate_zoom_element(self, selector, timeout=30):
         return WebDriverWait(self.driver, timeout).until(
