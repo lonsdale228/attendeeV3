@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import subprocess
@@ -5,6 +6,8 @@ import threading
 import time
 from datetime import datetime
 from typing import Optional
+
+import requests
 
 from bots.models import Participant, Utterance, Recording
 
@@ -85,11 +88,42 @@ def create_utterance_from_closed_caption(
 
     utterance.save()
 
+SERVER_URL = os.getenv("SERVER_URL")
+
+def send_task(url, js, log):
+    try:
+        js = json.loads(js)
+        log.info(f"Sending transcription to server.... {url}")
+        response = requests.post(url=url, json=js, timeout=20)
+        if (response.status_code == 200) or (response.status_code == 201):
+            log.info(f"Transcription sent to server successfully")
+        else:
+            log.error(f"Transcription failed to send to server. Status code: {response.status_code}")
+    except Exception as e:
+        log.error(f"Error sending transcription to server: {e}")
+
+def send_transcription_to_server(path: str):
+    with open(path, "r") as f:
+        lines = f.readlines()
+
+    conversation = {}
+
+    for line in lines:
+        parts = line.split(":", 1)
+        if len(parts) == 2:
+            speaker = parts[0].strip()
+            message = parts[1].strip()
+            conversation[speaker] = message
+
+    json_output = json.dumps(conversation, indent=4)
+
+    thread = threading.Thread(target=send_task, args=(SERVER_URL, json_output, logger))
+    thread.start()
 
 class ScreenAndAudioRecorder:
     def __init__(self, file_location):
         self.file_location = file_location
-        self.transcript_file = f"transcriptions/{datetime.now().strftime('%m_%d_%Y_%H_%M')}.txt"
+        self.transcript_file = f"transcriptions/{datetime.now().strftime('%m_%d_%Y_%H_%M_%S')}.txt"
         self.ffmpeg_proc = None
         self.screen_dimensions = (1920, 1080)
         self.exit_flag = threading.Event()
@@ -195,7 +229,7 @@ class ScreenAndAudioRecorder:
             # Format output
             timestamp = datetime.now().strftime("%H:%M:%S")
             output = (
-                f"[{timestamp}] {speaker_label}: {sentence}\n"
+                f"{speaker_label}:{sentence}\n"
             )
 
             # Write to file
@@ -211,7 +245,7 @@ class ScreenAndAudioRecorder:
         if speaker_id not in self.speaker_map:
             # Assign new speaker label (e.g., Speaker 1, Speaker 2)
             speaker_number = len(self.speaker_map) + 1
-            self.speaker_map[speaker_id] = f"Speaker {speaker_number}"
+            self.speaker_map[speaker_id] = f"speaker {speaker_number}"
         return self.speaker_map[speaker_id]
 
     def stop_recording(self):
@@ -236,6 +270,9 @@ class ScreenAndAudioRecorder:
         if self.transcript_file_handle:
             self.transcript_file_handle.close()
             logger.info(f"Transcript saved to {self.transcript_file}")
+
+        send_transcription_to_server(self.transcript_file)
+
         logger.info("Speaker mapping:")
         for sid, label in self.speaker_map.items():
             logger.info(f"  {sid} => {label}")
