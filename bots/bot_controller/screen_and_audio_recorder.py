@@ -92,7 +92,6 @@ SERVER_URL = os.getenv("SERVER_URL")
 
 def send_task(url, js, log):
     try:
-        js = json.loads(js)
         log.info(f"Sending transcription to server.... {url}")
         response = requests.post(url=url, json=js, timeout=20)
         if (response.status_code == 200) or (response.status_code == 201):
@@ -106,14 +105,16 @@ def send_transcription_to_server(path: str):
     with open(path, "r") as f:
         lines = f.readlines()
 
-    conversation = {}
+    conversation = []
 
     for line in lines:
+        d = {}
         parts = line.split(":", 1)
         if len(parts) == 2:
             speaker = parts[0].strip()
             message = parts[1].strip()
-            conversation[speaker] = message
+            d[speaker] = message
+        conversation.append(d)
 
     json_output = json.dumps(conversation, indent=4)
 
@@ -135,15 +136,15 @@ class ScreenAndAudioRecorder:
         self.transcript_file_handle = None
         self.speaker_map = {}
 
-    def start_recording(self, display_var, virt_cable_token):
+    def start_recording(self, display_var, virt_cable_token, meeting_id: str):
         logger.info(
             f"Starting screen recorder for display {display_var} with dimensions {self.screen_dimensions} and file location {self.file_location}")
         logger.info(f"Start monitoring on: {virt_cable_token} token")
 
         os.makedirs("transcriptions", exist_ok=True)
         self.transcript_file_handle = open(self.transcript_file, "a", encoding="utf-8")
+        self.transcript_file_handle.write(f"meeting_id:{meeting_id}\n")
 
-        # Modified FFmpeg command to output both AAC file and raw audio for Deepgram
         ffmpeg_cmd = [
             "ffmpeg", "-y",
             "-thread_queue_size", "4096",

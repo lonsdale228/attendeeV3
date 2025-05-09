@@ -99,7 +99,7 @@ class ZoomBotAdapter(WebBotAdapter, ZoomUIMethods):
                 cookies.append(cookie)
         return cookies
 
-    def attempt_to_join_meeting(self, virt_cable_token):
+    def attempt_to_join_meeting(self, virt_cable_token) -> str:
 
         parsed_url = parse.urlparse(self.meeting_url)
         conf_id = parsed_url.path.split("/j/")[-1]
@@ -137,6 +137,8 @@ class ZoomBotAdapter(WebBotAdapter, ZoomUIMethods):
         time.sleep(3)
 
         self.start_modal_monitoring()
+
+        return self.meeting_id
 
     def monitor_for_meeting_end_modal(self, check_interval=1):
         """

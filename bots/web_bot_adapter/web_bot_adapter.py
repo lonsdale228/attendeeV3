@@ -408,7 +408,7 @@ class WebBotAdapter(BotAdapter):
         while num_retries <= max_retries:
             try:
                 self.init_driver(virt_cable_token)
-                self.attempt_to_join_meeting(virt_cable_token)
+                self.meeting_id = self.attempt_to_join_meeting(virt_cable_token)
                 logger.info("Successfully joined meeting")
                 break
 
@@ -461,7 +461,8 @@ class WebBotAdapter(BotAdapter):
             sleep(2)
             if self.debug_screen_recorder:
                 self.debug_screen_recorder.stop()
-            self.start_recording_screen_callback(self.display_var_for_debug_recording, virt_cable_token)
+
+            self.start_recording_screen_callback(self.display_var_for_debug_recording, virt_cable_token, self.meeting_id)
 
         self.media_sending_enable_timestamp_ms = time.time() * 1000
 
