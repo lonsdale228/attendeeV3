@@ -93,7 +93,8 @@ SERVER_URL = os.getenv("SERVER_URL")
 def send_task(url, js, log):
     try:
         log.info(f"Sending transcription to server.... {url}")
-        response = requests.post(url=url, json=js, timeout=20)
+        header = {'Content-Type': 'application/json'}
+        response = requests.post(url=url, json=js, headers=header, timeout=20)
         if (response.status_code == 200) or (response.status_code == 201):
             log.info(f"Transcription sent to server successfully")
         else:
@@ -107,18 +108,23 @@ def send_transcription_to_server(path: str):
 
     conversation = []
 
-    for line in lines:
-        d = {}
+    d = {
+        "transcription": []
+    }
+
+    for i, line in enumerate(lines):
+        if i == 0:
+            d['meeting_id'] = line.split(":")[1].strip()
+            continue
         parts = line.split(":", 1)
         if len(parts) == 2:
             speaker = parts[0].strip()
             message = parts[1].strip()
-            d[speaker] = message
-        conversation.append(d)
+            d['transcription'].append({speaker: message})
 
-    json_output = json.dumps(conversation, indent=4)
+    conversation.append(d)
 
-    thread = threading.Thread(target=send_task, args=(SERVER_URL, json_output, logger))
+    thread = threading.Thread(target=send_task, args=(SERVER_URL, conversation, logger))
     thread.start()
 
 class ScreenAndAudioRecorder:
