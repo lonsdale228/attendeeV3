@@ -3,7 +3,7 @@ import os
 import time
 from uuid import uuid1
 
-from selenium.common.exceptions import ElementNotInteractableException, NoSuchElementException
+from selenium.common.exceptions import ElementNotInteractableException, NoSuchElementException, TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
@@ -44,7 +44,7 @@ class ZoomUIMethods:
 
             try:
                 name_field = self.locate_by_id('input-for-name', timeout=10)
-            except NoSuchElementException:
+            except TimeoutException:
                 policies_button = self.locate_el_path("//button[@id='wc_agree1']")
                 policies_button.click()
 
