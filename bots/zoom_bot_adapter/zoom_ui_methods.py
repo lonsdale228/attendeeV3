@@ -42,7 +42,14 @@ class ZoomUIMethods:
 
             self.make_screenshot()
 
-            name_field = self.locate_by_id('input-for-name')
+            try:
+                name_field = self.locate_by_id('input-for-name', timeout=10)
+            except NoSuchElementException:
+                policies_button = self.locate_el_path("//button[@id='wc_agree1']")
+                policies_button.click()
+
+                name_field = self.locate_by_id('input-for-name', timeout=20)
+
             time.sleep(1)
             name_field.send_keys("Skriba Bot")
 
