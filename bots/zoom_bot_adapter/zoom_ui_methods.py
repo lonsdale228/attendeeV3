@@ -55,9 +55,12 @@ class ZoomUIMethods:
 
             self.make_screenshot()
 
-            pswd_input = self.locate_by_id('input-for-pwd')
-            time.sleep(1)
-            pswd_input.send_keys(pwd)
+            try:
+                pswd_input = self.locate_by_id('input-for-pwd', timeout=5)
+                time.sleep(1)
+                pswd_input.send_keys(pwd)
+            except TimeoutException:
+                logging.error("There is not pwd input!")
 
             final_join = self.locate_zoom_element('.zm-btn.preview-join-button.zm-btn--default.zm-btn__outline--blue')
             final_join.click()
