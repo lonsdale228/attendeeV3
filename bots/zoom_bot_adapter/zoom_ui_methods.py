@@ -13,19 +13,13 @@ class ZoomUIMethods:
     DO_SCR = True
 
     def locate_zoom_element(self, selector, timeout=30):
-        return WebDriverWait(self.driver, timeout).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, selector))
-        )
+        return WebDriverWait(self.driver, timeout).until(EC.presence_of_element_located((By.CSS_SELECTOR, selector)))
 
     def locate_el_path(self, selector, timeout=30):
-        return WebDriverWait(self.driver, timeout).until(
-            EC.presence_of_element_located((By.XPATH, selector))
-        )
+        return WebDriverWait(self.driver, timeout).until(EC.presence_of_element_located((By.XPATH, selector)))
 
     def locate_by_id(self, selector, timeout=30):
-        return WebDriverWait(self.driver, timeout).until(
-            EC.presence_of_element_located((By.ID, selector))
-        )
+        return WebDriverWait(self.driver, timeout).until(EC.presence_of_element_located((By.ID, selector)))
 
     def make_screenshot(self):
         os.makedirs("screenshots", exist_ok=True)
@@ -35,6 +29,7 @@ class ZoomUIMethods:
     def join_meeting(self, url):
         try:
             from urllib import parse
+
             parsed_url = parse.urlparse(url)
 
             query_params = parse.parse_qs(parsed_url.query)
@@ -43,12 +38,20 @@ class ZoomUIMethods:
             self.make_screenshot()
 
             try:
-                name_field = self.locate_by_id('input-for-name', timeout=10)
+                err_msg = self.locate_el_path("//span[@class='error-message']", timeout=3)
+                if err_msg:
+                    logging.error(f"Meeting isn't started!")
+                    raise
+            except TimeoutException:
+                ...
+
+            try:
+                name_field = self.locate_by_id("input-for-name", timeout=10)
             except TimeoutException:
                 policies_button = self.locate_el_path("//button[@id='wc_agree1']")
                 policies_button.click()
 
-                name_field = self.locate_by_id('input-for-name', timeout=20)
+                name_field = self.locate_by_id("input-for-name", timeout=20)
 
             time.sleep(1)
             name_field.send_keys("Skriba Bot")
@@ -56,13 +59,13 @@ class ZoomUIMethods:
             self.make_screenshot()
 
             try:
-                pswd_input = self.locate_by_id('input-for-pwd', timeout=5)
+                pswd_input = self.locate_by_id("input-for-pwd", timeout=5)
                 time.sleep(1)
                 pswd_input.send_keys(pwd)
             except TimeoutException:
                 logging.error("There is not pwd input!")
 
-            final_join = self.locate_zoom_element('.zm-btn.preview-join-button.zm-btn--default.zm-btn__outline--blue')
+            final_join = self.locate_zoom_element(".zm-btn.preview-join-button.zm-btn--default.zm-btn__outline--blue")
             final_join.click()
             time.sleep(1)
 
@@ -74,6 +77,6 @@ class ZoomUIMethods:
             raise
 
     def handle_meeting_controls(self):
-        self.locate_zoom_element('#voip-tab > div > button').click()
+        self.locate_zoom_element("#voip-tab > div > button").click()
         # self.locate_zoom_element('button[aria-label="More"]').click()
         # self.locate_zoom_element('li:contains("Switch to Gallery View")').click()
