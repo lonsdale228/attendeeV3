@@ -42,7 +42,6 @@ class ZoomUIMethods:
 
                 if err_msg_premium:
                     logging.error(f"Meeting isn't started!")
-                    self.driver.quit()
                     raise NoSuchElementException
             except TimeoutException:
                 ...
@@ -74,7 +73,6 @@ class ZoomUIMethods:
                 footbar = self.locate_el_path("//div[@id='foot-bar']", timeout=15)
             except TimeoutException:
                 logging.error(f"Meeting isn't started!")
-                self.driver.quit()
                 raise NoSuchElementException
 
             time.sleep(1)
@@ -84,8 +82,6 @@ class ZoomUIMethods:
 
         except Exception as e:
             logging.error(f"Join meeting failed: {str(e)}")
-            self.driver.quit()
-            raise
 
     def handle_meeting_controls(self):
         self.locate_zoom_element("#voip-tab > div > button").click()
