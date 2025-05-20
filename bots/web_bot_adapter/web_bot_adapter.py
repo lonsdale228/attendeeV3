@@ -481,8 +481,8 @@ class WebBotAdapter(BotAdapter):
             self.click_leave_button()
         except Exception as e:
             logger.info(f"Error during leave: {e}")
-        finally:
-            self.send_message_callback({"message": self.Messages.MEETING_ENDED})
+        # finally:
+        #     self.send_message_callback({"message": self.Messages.MEETING_ENDED})
             self.left_meeting = True
 
     def cleanup(self):
