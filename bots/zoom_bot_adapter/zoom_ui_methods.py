@@ -8,6 +8,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
+from bots.web_bot_adapter.ui_methods import UiMeetingNotFoundException
+
 
 class ZoomUIMethods:
     DO_SCR = True
@@ -68,6 +70,11 @@ class ZoomUIMethods:
             final_join = self.locate_zoom_element(".zm-btn.preview-join-button.zm-btn--default.zm-btn__outline--blue")
             final_join.click()
             time.sleep(1)
+
+            try:
+                footbar = self.locate_el_path("//div[@id='foot-bar']", timeout=10)
+            except TimeoutException:
+                raise UiMeetingNotFoundException("aboba")
 
             self.make_screenshot()
             # self.handle_meeting_controls()
