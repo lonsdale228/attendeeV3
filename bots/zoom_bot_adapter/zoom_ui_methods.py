@@ -38,9 +38,9 @@ class ZoomUIMethods:
             self.make_screenshot()
 
             try:
-                err_msg = self.locate_el_path("//span[@class='error-message'] | //button[@class='host-signin-btn']", timeout=10)
+                err_msg_premium = self.locate_el_path("//span[@class='error-message']", timeout=5)
 
-                if err_msg:
+                if err_msg_premium:
                     logging.error(f"Meeting isn't started!")
                     self.driver.quit()
                     raise NoSuchElementException
@@ -69,6 +69,14 @@ class ZoomUIMethods:
 
             final_join = self.locate_zoom_element(".zm-btn.preview-join-button.zm-btn--default.zm-btn__outline--blue")
             final_join.click()
+
+            try:
+                footbar = self.locate_el_path("//div[@id='foot-bar']", timeout=15)
+            except TimeoutException:
+                logging.error(f"Meeting isn't started!")
+                self.driver.quit()
+                raise NoSuchElementException
+
             time.sleep(1)
 
             self.make_screenshot()
