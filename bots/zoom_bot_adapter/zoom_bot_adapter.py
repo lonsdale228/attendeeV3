@@ -139,7 +139,7 @@ class ZoomBotAdapter(WebBotAdapter, ZoomUIMethods):
 
             self.start_modal_monitoring()
         except NoSuchElementException:
-            raise UiMeetingNotFoundException
+            raise UiMeetingNotFoundException("Meeting not found")
 
         return self.meeting_id
 
