@@ -130,13 +130,15 @@ class ZoomBotAdapter(WebBotAdapter, ZoomUIMethods):
                 self.driver.add_cookie(cookie)
             except Exception as e:
                 logger.error(f"Error adding cookie {cookie['name']}: {e}")
+        try:
+            self.driver.get(url)
+            self.join_meeting(self.meeting_url)
 
-        self.driver.get(url)
-        self.join_meeting(self.meeting_url)
+            time.sleep(3)
 
-        time.sleep(3)
-
-        self.start_modal_monitoring()
+            self.start_modal_monitoring()
+        except NoSuchElementException:
+            self.send_message_callback({"message": self.Messages.MEETING_NOT_FOUND})
 
         return self.meeting_id
 

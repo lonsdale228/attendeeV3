@@ -38,10 +38,11 @@ class ZoomUIMethods:
             self.make_screenshot()
 
             try:
-                err_msg = self.locate_el_path("//span[@class='error-message']", timeout=3)
+                err_msg = self.locate_el_path("//span[@class='error-message']", timeout=5)
                 if err_msg:
                     logging.error(f"Meeting isn't started!")
-                    raise
+                    self.driver.quit()
+                    raise NoSuchElementException
             except TimeoutException:
                 ...
 
@@ -74,6 +75,7 @@ class ZoomUIMethods:
 
         except Exception as e:
             logging.error(f"Join meeting failed: {str(e)}")
+            self.driver.quit()
             raise
 
     def handle_meeting_controls(self):
