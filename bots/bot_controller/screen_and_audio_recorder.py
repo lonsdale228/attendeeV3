@@ -103,8 +103,11 @@ def send_task(url, js, log):
         log.error(f"Error sending transcription to server: {e}")
 
 def send_transcription_to_server(path: str):
-    with open(path, "r") as f:
-        lines = f.readlines()
+    if path:
+        with open(path, "r") as f:
+            lines = f.readlines()
+    else:
+        return
 
     conversation = []
 
