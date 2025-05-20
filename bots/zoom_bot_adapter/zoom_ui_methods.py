@@ -38,8 +38,10 @@ class ZoomUIMethods:
             self.make_screenshot()
 
             try:
-                err_msg = self.locate_el_path("//span[@class='error-message']", timeout=5)
-                if err_msg:
+                err_msg_premium = self.locate_el_path("//span[@class='error-message']", timeout=5)
+                err_msg = self.locate_el_path("//button[@class='host-signin-btn']", timeout=5)
+
+                if err_msg or err_msg_premium:
                     logging.error(f"Meeting isn't started!")
                     self.driver.quit()
                     raise NoSuchElementException
