@@ -38,7 +38,7 @@ class ZoomUIMethods:
             self.make_screenshot()
 
             try:
-                err_msg = self.locate_el_path("//span[@class='error-message'] | //button[@class='host-signin-btn']", timeout=5)
+                err_msg = self.locate_el_path("//span[@class='error-message'] | //button[@class='host-signin-btn']", timeout=10)
 
                 if err_msg:
                     logging.error(f"Meeting isn't started!")
