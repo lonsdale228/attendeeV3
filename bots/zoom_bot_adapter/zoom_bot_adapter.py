@@ -14,7 +14,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 
 from bots.web_bot_adapter import WebBotAdapter
-from bots.web_bot_adapter.ui_methods import UiMeetingNotFoundException
 from bots.zoom_bot_adapter.zoom_ui_methods import ZoomUIMethods
 from urllib import parse
 
@@ -131,15 +130,13 @@ class ZoomBotAdapter(WebBotAdapter, ZoomUIMethods):
                 self.driver.add_cookie(cookie)
             except Exception as e:
                 logger.error(f"Error adding cookie {cookie['name']}: {e}")
-        try:
-            self.driver.get(url)
-            self.join_meeting(self.meeting_url)
 
-            time.sleep(3)
+        self.driver.get(url)
+        self.join_meeting(self.meeting_url)
 
-            self.start_modal_monitoring()
-        except NoSuchElementException:
-            raise UiMeetingNotFoundException("Meeting not found")
+        time.sleep(3)
+
+        self.start_modal_monitoring()
 
         return self.meeting_id
 

@@ -38,11 +38,10 @@ class ZoomUIMethods:
             self.make_screenshot()
 
             try:
-                err_msg_premium = self.locate_el_path("//span[@class='error-message']", timeout=5)
-
-                if err_msg_premium:
+                err_msg = self.locate_el_path("//span[@class='error-message']", timeout=3)
+                if err_msg:
                     logging.error(f"Meeting isn't started!")
-                    raise NoSuchElementException
+                    raise
             except TimeoutException:
                 ...
 
@@ -68,23 +67,14 @@ class ZoomUIMethods:
 
             final_join = self.locate_zoom_element(".zm-btn.preview-join-button.zm-btn--default.zm-btn__outline--blue")
             final_join.click()
-
-            try:
-                footbar = self.locate_el_path("//div[@id='foot-bar']", timeout=15)
-            except TimeoutException:
-                logging.error(f"Meeting isn't started!")
-                raise NoSuchElementException
-
             time.sleep(1)
 
             self.make_screenshot()
             # self.handle_meeting_controls()
 
-        except NoSuchElementException:
-            logging.error("No such el!")
-            raise NoSuchElementException
         except Exception as e:
             logging.error(f"Join meeting failed: {str(e)}")
+            raise
 
     def handle_meeting_controls(self):
         self.locate_zoom_element("#voip-tab > div > button").click()
