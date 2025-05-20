@@ -14,6 +14,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 
 from bots.web_bot_adapter import WebBotAdapter
+from bots.web_bot_adapter.ui_methods import UiMeetingNotFoundException
 from bots.zoom_bot_adapter.zoom_ui_methods import ZoomUIMethods
 from urllib import parse
 
@@ -138,7 +139,7 @@ class ZoomBotAdapter(WebBotAdapter, ZoomUIMethods):
 
             self.start_modal_monitoring()
         except NoSuchElementException:
-            self.send_message_callback({"message": self.Messages.MEETING_NOT_FOUND})
+            raise UiMeetingNotFoundException
 
         return self.meeting_id
 

@@ -81,6 +81,7 @@ class ZoomUIMethods:
             # self.handle_meeting_controls()
 
         except NoSuchElementException:
+            logging.error("No such el!")
             raise NoSuchElementException
         except Exception as e:
             logging.error(f"Join meeting failed: {str(e)}")
