@@ -408,8 +408,12 @@ class WebBotAdapter(BotAdapter):
         while num_retries <= max_retries:
             try:
                 self.init_driver(virt_cable_token)
-                self.meeting_id = self.attempt_to_join_meeting(virt_cable_token)
-                logger.info("Successfully joined meeting")
+                try:
+                    self.meeting_id = self.attempt_to_join_meeting(virt_cable_token)
+                    logger.info("Successfully joined meeting")
+                except Exception as e:
+                    self.cleanup()
+                    logger.error(f"Error! joining! meeting!: {e}")
                 break
 
             except UiRequestToJoinDeniedException:
