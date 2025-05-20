@@ -138,7 +138,7 @@ class ZoomBotAdapter(WebBotAdapter, ZoomUIMethods):
 
             self.start_modal_monitoring()
         except NoSuchElementException:
-            self.send_message_callback({"message": self.Messages.MEETING_NOT_FOUND})
+            self.driver.quit()
 
         return self.meeting_id
 
