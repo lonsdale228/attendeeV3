@@ -80,6 +80,8 @@ class ZoomUIMethods:
             self.make_screenshot()
             # self.handle_meeting_controls()
 
+        except NoSuchElementException:
+            raise NoSuchElementException
         except Exception as e:
             logging.error(f"Join meeting failed: {str(e)}")
 
